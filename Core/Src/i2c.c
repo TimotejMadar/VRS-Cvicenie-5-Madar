@@ -78,6 +78,58 @@ void MX_I2C1_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
+#define I2C_TIMEOUT  10000U   // počet pokusov, kým to vzdáme (cca 10 ms)
+
+/* Čaká, kým sa v registri ISR nastaví zadaný flag.
+ * Vráti 0 = OK, 1 = chyba (senzor neodpovedal alebo vypršal čas). */
+static uint8_t I2C1_WaitFlag(uint32_t flag)
+{
+    uint32_t timeout = I2C_TIMEOUT;
+
+    while ((I2C1->ISR & flag) == 0)
+    {
+        if (I2C1->ISR & I2C_ISR_NACKF)      // senzor povedal "nie" (NACK)
+        {
+            LL_I2C_ClearFlag_NACK(I2C1);
+            LL_I2C_ClearFlag_STOP(I2C1);    // pri NACK hardvér sám pošle STOP
+            return 1;
+        }
+        if (--timeout == 0)                 // čakáme príliš dlho
+        {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+/* Prečíta 'len' bajtov zo senzora, začínajúc registrom 'reg'.
+ * dev_addr = 7-bitová adresa senzora (napr. 0x5F)
+ * Vráti 0 = OK, 1 = chyba. */
+uint8_t I2C1_Read(uint8_t dev_addr, uint8_t reg, uint8_t *data, uint8_t len)
+{
+    /* Fáza 1: START + adresa (zápis) + číslo registra, bez STOP */
+    LL_I2C_HandleTransfer(I2C1, dev_addr << 1, LL_I2C_ADDRSLAVE_7BIT, 1,
+                          LL_I2C_MODE_SOFTEND, LL_I2C_GENERATE_START_WRITE);
+
+    if (I2C1_WaitFlag(I2C_ISR_TXIS)) return 1;
+    LL_I2C_TransmitData8(I2C1, reg);
+    if (I2C1_WaitFlag(I2C_ISR_TC)) return 1;
+
+    /* Fáza 2: RESTART + adresa (čítanie), prijmeme 'len' bajtov, potom auto STOP */
+    LL_I2C_HandleTransfer(I2C1, dev_addr << 1, LL_I2C_ADDRSLAVE_7BIT, len,
+                          LL_I2C_MODE_AUTOEND, LL_I2C_GENERATE_RESTART_7BIT_READ);
+
+    for (uint8_t i = 0; i < len; i++)
+    {
+        if (I2C1_WaitFlag(I2C_ISR_RXNE)) return 1;
+        data[i] = LL_I2C_ReceiveData8(I2C1);
+    }
+
+    if (I2C1_WaitFlag(I2C_ISR_STOPF)) return 1;
+    LL_I2C_ClearFlag_STOP(I2C1);
+    return 0;
+}
 
 /* USER CODE END 1 */
 

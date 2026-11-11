@@ -24,7 +24,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdio.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,7 +56,18 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+static void TestWhoAmI(uint8_t dev_addr)
+{
+    uint8_t who = 0;
+    char buf[50];
 
+    if (I2C1_Read(dev_addr, 0x0F, &who, 1) == 0)
+        sprintf(buf, "0x%02X: WHO_AM_I = 0x%02X\r\n", dev_addr, who);
+    else
+        sprintf(buf, "0x%02X: ziadna odpoved\r\n", dev_addr);
+
+    USART2_SendString(buf);
+}
 /* USER CODE END 0 */
 
 /**
@@ -108,8 +119,11 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  USART2_SendString("Ahoj z STM32!\r\n");
-	  LL_mDelay(500);
+	  TestWhoAmI(0x5F);   // HTS221
+	  TestWhoAmI(0x5C);   // LPS25HB (SA0 = 0)
+	  TestWhoAmI(0x5D);   // LPS25HB (SA0 = 1)
+	  USART2_SendString("----\r\n");
+	  LL_mDelay(1000);
   }
   /* USER CODE END 3 */
 }
