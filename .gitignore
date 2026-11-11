@@ -1,0 +1,20 @@
+# Vystupy kompilacie (vznikaju pri kazdom Build)
+Debug/
+Release/
+*.o
+*.d
+*.su
+*.cyclo
+*.elf
+*.bin
+*.hex
+*.map
+*.list
+
+# Lokalne nastavenia IDE (kazdy pocitac ma vlastne)
+.metadata/
+*.launch
+.settings/language.settings.xml
+
+# Zalohy
+*.bak
