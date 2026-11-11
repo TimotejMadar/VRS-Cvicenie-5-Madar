@@ -68,6 +68,20 @@ static void TestWhoAmI(uint8_t dev_addr)
 
     USART2_SendString(buf);
 }
+
+
+static void TestWrite(void)
+{
+    uint8_t tx[3] = {0x11, 0x22, 0x33};   // čo zapíšeme
+    uint8_t rx[3] = {0, 0, 0};            // sem prečítame
+    char buf[60];
+
+    I2C1_Write(0x5D, 0x08 | 0x80, tx, 3); // multi-byte zápis (auto-increment)
+    I2C1_Read (0x5D, 0x08 | 0x80, rx, 3); // multi-byte čítanie
+
+    sprintf(buf, "REF_P: %02X %02X %02X\r\n", rx[0], rx[1], rx[2]);
+    USART2_SendString(buf);
+}
 /* USER CODE END 0 */
 
 /**
@@ -120,8 +134,8 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  TestWhoAmI(0x5F);   // HTS221
-	  TestWhoAmI(0x5C);   // LPS25HB (SA0 = 0)
 	  TestWhoAmI(0x5D);   // LPS25HB (SA0 = 1)
+	  TestWrite();
 	  USART2_SendString("----\r\n");
 	  LL_mDelay(1000);
   }

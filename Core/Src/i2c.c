@@ -131,5 +131,30 @@ uint8_t I2C1_Read(uint8_t dev_addr, uint8_t reg, uint8_t *data, uint8_t len)
     return 0;
 }
 
+
+/* Zapíše 'len' bajtov do senzora, začínajúc registrom 'reg'.
+ * dev_addr = 7-bitová adresa senzora
+ * Vráti 0 = OK, 1 = chyba. */
+uint8_t I2C1_Write(uint8_t dev_addr, uint8_t reg, uint8_t *data, uint8_t len)
+{
+    /* START + adresa (zápis), pošleme 1 + len bajtov, potom auto STOP */
+    LL_I2C_HandleTransfer(I2C1, dev_addr << 1, LL_I2C_ADDRSLAVE_7BIT, len + 1,
+                          LL_I2C_MODE_AUTOEND, LL_I2C_GENERATE_START_WRITE);
+
+    if (I2C1_WaitFlag(I2C_ISR_TXIS)) return 1;
+    LL_I2C_TransmitData8(I2C1, reg);              // najprv číslo registra
+
+    for (uint8_t i = 0; i < len; i++)             // potom dáta
+    {
+        if (I2C1_WaitFlag(I2C_ISR_TXIS)) return 1;
+        LL_I2C_TransmitData8(I2C1, data[i]);
+    }
+
+    if (I2C1_WaitFlag(I2C_ISR_STOPF)) return 1;
+    LL_I2C_ClearFlag_STOP(I2C1);
+    return 0;
+}
+
+
 /* USER CODE END 1 */
 
