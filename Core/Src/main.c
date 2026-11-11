@@ -108,7 +108,7 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  LL_GPIO_TogglePin(LD3_GPIO_Port, LD3_Pin);   // prepne LED (zap/vyp)
+	  USART2_SendString("Ahoj z STM32!\r\n");
 	  LL_mDelay(500);
   }
   /* USER CODE END 3 */

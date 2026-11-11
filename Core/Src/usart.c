@@ -74,6 +74,16 @@ void MX_USART2_UART_Init(void)
 }
 
 /* USER CODE BEGIN 1 */
-
+void USART2_SendString(const char *text)
+{
+    while (*text != '\0')                          // kým nie sme na konci reťazca
+    {
+        while (!LL_USART_IsActiveFlag_TXE(USART2)) // čakaj, kým je register voľný
+        {
+        }
+        LL_USART_TransmitData8(USART2, (uint8_t)*text); // pošli znak
+        text++;                                    // posuň sa na ďalší znak
+    }
+}
 /* USER CODE END 1 */
 
