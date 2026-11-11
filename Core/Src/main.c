@@ -25,6 +25,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
+#include "hts221.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -56,32 +57,7 @@ void SystemClock_Config(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-static void TestWhoAmI(uint8_t dev_addr)
-{
-    uint8_t who = 0;
-    char buf[50];
 
-    if (I2C1_Read(dev_addr, 0x0F, &who, 1) == 0)
-        sprintf(buf, "0x%02X: WHO_AM_I = 0x%02X\r\n", dev_addr, who);
-    else
-        sprintf(buf, "0x%02X: ziadna odpoved\r\n", dev_addr);
-
-    USART2_SendString(buf);
-}
-
-
-static void TestWrite(void)
-{
-    uint8_t tx[3] = {0x11, 0x22, 0x33};   // čo zapíšeme
-    uint8_t rx[3] = {0, 0, 0};            // sem prečítame
-    char buf[60];
-
-    I2C1_Write(0x5D, 0x08 | 0x80, tx, 3); // multi-byte zápis (auto-increment)
-    I2C1_Read (0x5D, 0x08 | 0x80, rx, 3); // multi-byte čítanie
-
-    sprintf(buf, "REF_P: %02X %02X %02X\r\n", rx[0], rx[1], rx[2]);
-    USART2_SendString(buf);
-}
 /* USER CODE END 0 */
 
 /**
@@ -123,7 +99,12 @@ int main(void)
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  HTS221_RegisterCallbacks(I2C1_Read, I2C1_Write);
 
+  if (HTS221_Init())
+      USART2_SendString("HTS221 OK\r\n");
+  else
+      USART2_SendString("HTS221 CHYBA\r\n");
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -133,10 +114,6 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  TestWhoAmI(0x5F);   // HTS221
-	  TestWhoAmI(0x5D);   // LPS25HB (SA0 = 1)
-	  TestWrite();
-	  USART2_SendString("----\r\n");
 	  LL_mDelay(1000);
   }
   /* USER CODE END 3 */
