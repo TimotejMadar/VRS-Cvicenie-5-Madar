@@ -99,6 +99,7 @@ int main(void)
   MX_I2C1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  LL_mDelay(100);
   HTS221_RegisterCallbacks(I2C1_Read, I2C1_Write);
 
   if (HTS221_Init())
@@ -114,8 +115,13 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  LL_mDelay(1000);
-  }
+	  char buf[60];
+	  	  float t = HTS221_GetTemperature();
+	  	  float h = HTS221_GetHumidity();
+
+	  	  sprintf(buf, "T = %.1f C, H = %.0f %%\r\n", t, h);
+	  	  USART2_SendString(buf);
+	  	  LL_mDelay(1000);  }
   /* USER CODE END 3 */
 }
 
