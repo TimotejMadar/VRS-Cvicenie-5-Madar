@@ -26,6 +26,7 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include "hts221.h"
+#include "lps25hb.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -46,7 +47,7 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+static float p0 = 0.0f;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -100,12 +101,23 @@ int main(void)
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   LL_mDelay(100);
-  HTS221_RegisterCallbacks(I2C1_Read, I2C1_Write);
 
-  if (HTS221_Init())
-      USART2_SendString("HTS221 OK\r\n");
-  else
-      USART2_SendString("HTS221 CHYBA\r\n");
+    HTS221_RegisterCallbacks(I2C1_Read, I2C1_Write);
+    LPS25HB_RegisterCallbacks(I2C1_Read, I2C1_Write);
+
+    if (HTS221_Init())  USART2_SendString("HTS221 OK\r\n");
+    else USART2_SendString("HTS221 CHYBA\r\n");
+
+    if (LPS25HB_Init()) USART2_SendString("LPS25HB OK\r\n");
+    else USART2_SendString("LPS25HB CHYBA\r\n");
+
+    LL_mDelay(1000);
+    for (int i = 0; i < 20; i++)
+    {
+        p0 += LPS25HB_GetPressure();
+        LL_mDelay(150);
+    }
+    p0 /= 20.0f;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -116,12 +128,14 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	  char buf[60];
-	  	  float t = HTS221_GetTemperature();
-	  	  float h = HTS221_GetHumidity();
+	  float t = HTS221_GetTemperature();
+	  float h = HTS221_GetHumidity();
+	  float p = LPS25HB_GetPressure();
+	  float alt = LPS25HB_CalcAltitude(p, p0);
 
-	  	  sprintf(buf, "T = %.1f C, H = %.0f %%\r\n", t, h);
-	  	  USART2_SendString(buf);
-	  	  LL_mDelay(1000);  }
+	  sprintf(buf, "T = %.1f C, H = %.0f %%, P = %.2f hPa, Alt = %.2f m\r\n", t, h, p, alt);
+	  USART2_SendString(buf);
+	  LL_mDelay(1000);  }
   /* USER CODE END 3 */
 }
 
