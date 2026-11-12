@@ -105,11 +105,8 @@ int main(void)
     HTS221_RegisterCallbacks(I2C1_Read, I2C1_Write);
     LPS25HB_RegisterCallbacks(I2C1_Read, I2C1_Write);
 
-    if (HTS221_Init())  USART2_SendString("HTS221 OK\r\n");
-    else USART2_SendString("HTS221 CHYBA\r\n");
-
-    if (LPS25HB_Init()) USART2_SendString("LPS25HB OK\r\n");
-    else USART2_SendString("LPS25HB CHYBA\r\n");
+    if (!HTS221_Init())  USART2_SendString("HTS221 CHYBA\r\n");
+    if (!LPS25HB_Init()) USART2_SendString("LPS25HB CHYBA\r\n");
 
     LL_mDelay(1000);
     for (int i = 0; i < 20; i++)
@@ -133,7 +130,7 @@ int main(void)
 	  float p = LPS25HB_GetPressure();
 	  float alt = LPS25HB_CalcAltitude(p, p0);
 
-	  sprintf(buf, "T = %.1f C, H = %.0f %%, P = %.2f hPa, Alt = %.2f m\r\n", t, h, p, alt);
+	  sprintf(buf, "%04.1f,%02d,%07.2f,%05.2f\r\n", t, (int)(h + 0.5f), p, alt);
 	  USART2_SendString(buf);
 	  LL_mDelay(1000);  }
   /* USER CODE END 3 */
